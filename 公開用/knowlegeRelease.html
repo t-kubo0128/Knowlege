@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI・LLM ナレッジベース</title>
+
     <style>
-        /* 以前のCSS（省略せずにそのまま使います） */
         :root {
             --primary-color: #2563eb;
             --bg-color: #f3f4f6;
@@ -14,7 +14,13 @@
         }
 
         body {
-            font-family: 'Helvetica Neue', 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif;
+            font-family:
+                'Helvetica Neue',
+                'Segoe UI',
+                'Hiragino Kaku Gothic ProN',
+                'Hiragino Sans',
+                'Meiryo',
+                sans-serif;
             line-height: 1.8;
             color: var(--text-color);
             background-color: var(--bg-color);
@@ -31,95 +37,382 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        /* 検索ボックスのデザイン */
-        .search-container {
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-        }
-        
-        #searchInput {
-            width: 100%;
-            max-width: 400px;
-            padding: 12px 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 1em;
-            outline: none;
-            transition: border-color 0.2s;
+        h1,
+        h2,
+        h3 {
+            color: #111827;
+            margin-top: 2em;
+            margin-bottom: 1em;
+            font-weight: 700;
         }
 
-        #searchInput:focus {
+        h1 {
+            font-size: 2.2em;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 1.6em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            font-size: 0.95em;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+        }
+
+        tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* 絞り込みで非表示にする行 */
+        .hidden-row {
+            display: none !important;
+        }
+
+        /* 表ごとの列フィルタエリア */
+        .table-filter-container {
+            margin: 24px 0 8px;
+            padding: 14px;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .table-filter-title {
+            margin: 0 0 10px;
+            color: #475569;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .table-filter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .column-filter-group {
+            display: flex;
+            flex: 1 1 180px;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 150px;
+        }
+
+        .column-filter-group label {
+            color: #475569;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .column-filter-select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: var(--text-color);
+            font-size: 0.9em;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .column-filter-select:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        /* 見出しやテーブルのCSS */
-        h1, h2, h3 { color: #111827; margin-top: 2em; margin-bottom: 1em; font-weight: 700; }
-        h1 { font-size: 2.2em; border-bottom: 3px solid var(--primary-color); padding-bottom: 10px; margin-top: 0; }
-        h2 { font-size: 1.6em; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
-        a { color: var(--primary-color); text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em; background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
-        th, td { padding: 16px; border-bottom: 1px solid var(--border-color); text-align: left; }
-        th { background-color: #f8fafc; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 0.85em; }
-        tbody tr:hover { background-color: #f8fafc; }
-        .hidden-row { display: none !important; } /* 非表示用クラス */
+        .table-filter-clear {
+            padding: 8px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: #374151;
+            font-size: 0.9em;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .table-filter-clear:hover {
+            background-color: #f1f5f9;
+        }
+
+        .table-filter-count {
+            margin-top: 10px;
+            color: #64748b;
+            font-size: 0.85em;
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            #content-wrapper {
+                padding: 30px 20px;
+            }
+
+            th,
+            td {
+                padding: 10px;
+            }
+
+            .column-filter-group {
+                flex-basis: 100%;
+            }
+
+            .table-filter-clear {
+                width: 100%;
+            }
+        }
     </style>
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
+
 <body>
     <div id="content-wrapper">
-        <!-- 検索ボックス（UI部品） -->
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="表の中を検索（例: ChatGPT, 無料...）">
-        </div>
-
-        <!-- Markdownの内容が流し込まれる場所 -->
         <div id="markdown-content">データを読み込んでいます...</div>
     </div>
 
     <script>
         const contentDiv = document.getElementById('markdown-content');
-        const searchInput = document.getElementById('searchInput');
 
-        // AI.md の読み込み
+        /*
+         * AI.md を読み込み、MarkdownをHTMLへ変換する
+         */
         fetch('../AI.md')
             .then(response => {
-                if (!response.ok) throw new Error('ファイルの読み込みに失敗しました');
+                if (!response.ok) {
+                    throw new Error('ファイルの読み込みに失敗しました');
+                }
+
                 return response.text();
             })
             .then(text => {
-                // マークダウンをHTMLに変換して表示
                 contentDiv.innerHTML = marked.parse(text);
-                
-                // 表示完了後にフィルタ機能をセットアップ
-                setupFilter();
+
+                // Markdownから生成された各表に列フィルタを追加
+                setupColumnFilters();
             })
             .catch(error => {
-                contentDiv.innerHTML = '<p style="color:#ef4444;">エラー: ' + error.message + '</p>';
+                contentDiv.innerHTML =
+                    '<p style="color:#ef4444;">エラー: ' +
+                    error.message +
+                    '</p>';
             });
 
-        // フィルタ（検索）機能のロジック
-        function setupFilter() {
-            // 変換されたHTMLの中から、すべてのテーブルのデータ行（<tbody>の中の<tr>）を取得
-            const tableRows = contentDiv.querySelectorAll('tbody tr');
+        /*
+         * 各tableに対し、列ごとのプルダウンフィルタを作成する。
+         *
+         * 複数の列を指定した場合はAND条件となる。
+         * 例:
+         * 「料金 = 無料」かつ「日本語対応 = 対応」
+         */
+        function setupColumnFilters() {
+            const tables = contentDiv.querySelectorAll('table');
 
-            // 検索ボックスに文字が入力されるたびに実行されるイベント
-            searchInput.addEventListener('input', function(e) {
-                const keyword = e.target.value.toLowerCase(); // 入力された文字を小文字に変換
+            tables.forEach(table => {
+                const headerCells = [...table.querySelectorAll('thead th')];
+                const rows = [...table.querySelectorAll('tbody tr')];
 
-                tableRows.forEach(row => {
-                    // その行のテキスト全体を取得（小文字に変換）
-                    const rowText = row.textContent.toLowerCase();
+                // 見出し行またはデータ行がない表は対象外
+                if (headerCells.length === 0 || rows.length === 0) {
+                    return;
+                }
 
-                    // キーワードが含まれていれば表示、なければ非表示
-                    if (rowText.includes(keyword)) {
-                        row.classList.remove('hidden-row');
-                    } else {
-                        row.classList.add('hidden-row');
-                    }
+                // フィルタ全体の枠
+                const filterContainer = document.createElement('div');
+                filterContainer.className = 'table-filter-container';
+
+                // タイトル
+                const title = document.createElement('p');
+                title.className = 'table-filter-title';
+                title.textContent = '列ごとの絞り込み';
+
+                // 各列のプルダウンを配置する領域
+                const controls = document.createElement('div');
+                controls.className = 'table-filter-controls';
+
+                // 表示件数
+                const countText = document.createElement('div');
+                countText.className = 'table-filter-count';
+
+                filterContainer.appendChild(title);
+                filterContainer.appendChild(controls);
+                filterContainer.appendChild(countText);
+
+                // フィルタを表の直前に挿入
+                table.parentNode.insertBefore(filterContainer, table);
+
+                const filterSelects = [];
+
+                /*
+                 * 表の列ごとにフィルタ用プルダウンを作成
+                 */
+                headerCells.forEach((headerCell, columnIndex) => {
+                    const group = document.createElement('div');
+                    group.className = 'column-filter-group';
+
+                    const columnName =
+                        headerCell.textContent.trim() || `列${columnIndex + 1}`;
+
+                    const label = document.createElement('label');
+                    label.textContent = columnName;
+
+                    const select = document.createElement('select');
+                    select.className = 'column-filter-select';
+                    select.dataset.columnIndex = columnIndex;
+                    select.setAttribute(
+                        'aria-label',
+                        `${columnName}で絞り込む`
+                    );
+
+                    // 「すべて」＝この列の絞り込みなし
+                    const allOption = document.createElement('option');
+                    allOption.value = '';
+                    allOption.textContent = 'すべて';
+                    select.appendChild(allOption);
+
+                    /*
+                     * この列に存在する値を重複なしで取得する。
+                     * セルにリンクなどのHTMLが含まれていても、
+                     * 表示テキストを値として扱う。
+                     */
+                    const values = new Set();
+
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        const cell = cells[columnIndex];
+
+                        if (!cell) {
+                            return;
+                        }
+
+                        const value = cell.textContent.trim();
+
+                        if (value !== '') {
+                            values.add(value);
+                        }
+                    });
+
+                    // 日本語を考慮して並び替えたうえで選択肢に追加
+                    [...values]
+                        .sort((a, b) => a.localeCompare(b, 'ja'))
+                        .forEach(value => {
+                            const option = document.createElement('option');
+                            option.value = value;
+                            option.textContent = value;
+                            select.appendChild(option);
+                        });
+
+                    group.appendChild(label);
+                    group.appendChild(select);
+                    controls.appendChild(group);
+
+                    filterSelects.push(select);
                 });
+
+                // 全列の条件を解除するボタン
+                const clearButton = document.createElement('button');
+                clearButton.type = 'button';
+                clearButton.className = 'table-filter-clear';
+                clearButton.textContent = '条件をクリア';
+                controls.appendChild(clearButton);
+
+                /*
+                 * 各プルダウンで選択された値に応じて行を表示・非表示にする。
+                 * 複数の列を選んだ場合は、すべての条件に一致する行だけを表示。
+                 */
+                function applyFilters() {
+                    let visibleCount = 0;
+
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td');
+
+                        const isVisible = filterSelects.every(select => {
+                            const selectedValue = select.value;
+
+                            // 「すべて」の場合は、この列では絞り込まない
+                            if (selectedValue === '') {
+                                return true;
+                            }
+
+                            const columnIndex = Number(select.dataset.columnIndex);
+                            const cell = cells[columnIndex];
+
+                            // 対象のセルがなければ条件不一致
+                            if (!cell) {
+                                return false;
+                            }
+
+                            // セルの文字列と選択値が完全一致した場合に表示
+                            return cell.textContent.trim() === selectedValue;
+                        });
+
+                        row.classList.toggle('hidden-row', !isVisible);
+
+                        if (isVisible) {
+                            visibleCount++;
+                        }
+                    });
+
+                    countText.textContent =
+                        `${visibleCount} / ${rows.length} 件を表示中`;
+                }
+
+                // プルダウンの値が変更されたら絞り込む
+                filterSelects.forEach(select => {
+                    select.addEventListener('change', applyFilters);
+                });
+
+                // 条件の全解除
+                clearButton.addEventListener('click', () => {
+                    filterSelects.forEach(select => {
+                        select.value = '';
+                    });
+
+                    applyFilters();
+                });
+
+                // 初期状態の件数を表示
+                applyFilters();
             });
         }
     </script>
