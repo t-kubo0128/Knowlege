@@ -4,69 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI・LLM ナレッジベース</title>
-    
-    <!-- お好きなデザイン（CSS）をここに書きます -->
     <style>
+        /* 以前のCSS（省略せずにそのまま使います） */
+        :root {
+            --primary-color: #2563eb;
+            --bg-color: #f3f4f6;
+            --text-color: #374151;
+            --border-color: #e5e7eb;
+        }
+
         body {
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            line-height: 1.6;
-            color: #333;
+            font-family: 'Helvetica Neue', 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo', sans-serif;
+            line-height: 1.8;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        #content-wrapper {
+            background-color: #ffffff;
             max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f9f9f9;
+            padding: 50px 60px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        /* コンテンツが入る白い箱のデザイン */
-        #content {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        /* テーブル（表）のデザイン */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #0052CC; /* Confluenceっぽい青 */
-            color: white;
-        }
-    </style>
 
-    <!-- MarkdownをHTMLに変換するライブラリ（Marked.js）を読み込む -->
+        /* 検索ボックスのデザイン */
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        #searchInput {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #searchInput:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* 見出しやテーブルのCSS */
+        h1, h2, h3 { color: #111827; margin-top: 2em; margin-bottom: 1em; font-weight: 700; }
+        h1 { font-size: 2.2em; border-bottom: 3px solid var(--primary-color); padding-bottom: 10px; margin-top: 0; }
+        h2 { font-size: 1.6em; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        a { color: var(--primary-color); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.95em; background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 16px; border-bottom: 1px solid var(--border-color); text-align: left; }
+        th { background-color: #f8fafc; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 0.85em; }
+        tbody tr:hover { background-color: #f8fafc; }
+        .hidden-row { display: none !important; } /* 非表示用クラス */
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+    <div id="content-wrapper">
+        <!-- 検索ボックス（UI部品） -->
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="表の中を検索（例: ChatGPT, 無料...）">
+        </div>
 
-    <!-- ここにMarkdownの内容が流し込まれます -->
-    <div id="content">読み込み中...</div>
+        <!-- Markdownの内容が流し込まれる場所 -->
+        <div id="markdown-content">データを読み込んでいます...</div>
+    </div>
 
     <script>
-        // 1. 表示させたい場所を取得
-        const contentDiv = document.getElementById('content');
+        const contentDiv = document.getElementById('markdown-content');
+        const searchInput = document.getElementById('searchInput');
 
-        // 2. AI.md ファイルを読みに行く
-        // （HTMLファイルから見て1つ上の階層にあるので "../AI.md" と指定します）
+        // AI.md の読み込み
         fetch('../AI.md')
             .then(response => {
                 if (!response.ok) throw new Error('ファイルの読み込みに失敗しました');
                 return response.text();
             })
             .then(text => {
-                // 3. 取得したMarkdownテキストをHTMLに変換して流し込む
+                // マークダウンをHTMLに変換して表示
                 contentDiv.innerHTML = marked.parse(text);
+                
+                // 表示完了後にフィルタ機能をセットアップ
+                setupFilter();
             })
             .catch(error => {
-                contentDiv.innerHTML = '<p style="color:red;">エラー: ' + error.message + '</p>';
+                contentDiv.innerHTML = '<p style="color:#ef4444;">エラー: ' + error.message + '</p>';
             });
+
+        // フィルタ（検索）機能のロジック
+        function setupFilter() {
+            // 変換されたHTMLの中から、すべてのテーブルのデータ行（<tbody>の中の<tr>）を取得
+            const tableRows = contentDiv.querySelectorAll('tbody tr');
+
+            // 検索ボックスに文字が入力されるたびに実行されるイベント
+            searchInput.addEventListener('input', function(e) {
+                const keyword = e.target.value.toLowerCase(); // 入力された文字を小文字に変換
+
+                tableRows.forEach(row => {
+                    // その行のテキスト全体を取得（小文字に変換）
+                    const rowText = row.textContent.toLowerCase();
+
+                    // キーワードが含まれていれば表示、なければ非表示
+                    if (rowText.includes(keyword)) {
+                        row.classList.remove('hidden-row');
+                    } else {
+                        row.classList.add('hidden-row');
+                    }
+                });
+            });
+        }
     </script>
 </body>
 </html>
