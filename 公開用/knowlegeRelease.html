@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI・LLM ナレッジベース</title>
+    
+    <!-- お好きなデザイン（CSS）をここに書きます -->
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        /* コンテンツが入る白い箱のデザイン */
+        #content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* テーブル（表）のデザイン */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #0052CC; /* Confluenceっぽい青 */
+            color: white;
+        }
+    </style>
+
+    <!-- MarkdownをHTMLに変換するライブラリ（Marked.js）を読み込む -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+    <!-- ここにMarkdownの内容が流し込まれます -->
+    <div id="content">読み込み中...</div>
+
+    <script>
+        // 1. 表示させたい場所を取得
+        const contentDiv = document.getElementById('content');
+
+        // 2. AI.md ファイルを読みに行く
+        // （HTMLファイルから見て1つ上の階層にあるので "../AI.md" と指定します）
+        fetch('../AI.md')
+            .then(response => {
+                if (!response.ok) throw new Error('ファイルの読み込みに失敗しました');
+                return response.text();
+            })
+            .then(text => {
+                // 3. 取得したMarkdownテキストをHTMLに変換して流し込む
+                contentDiv.innerHTML = marked.parse(text);
+            })
+            .catch(error => {
+                contentDiv.innerHTML = '<p style="color:red;">エラー: ' + error.message + '</p>';
+            });
+    </script>
+</body>
+</html>
