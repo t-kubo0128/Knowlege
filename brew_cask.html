@@ -1,0 +1,87 @@
+brew install --cask の仕組み
+なぜgitは --cask なしで、VS Codeは --cask 付きなのか
+1. コマンドを分解する
+brew install --cask visual-studio-code
+部分
+意味
+brew
+Homebrewという店員を呼ぶ
+install
+「インストールして」と頼む
+--cask
+「GUIアプリ（マウスで操作するアプリ）を入れて」と指定する
+visual-studio-code
+入れるアプリの名前
+2. なぜ --cask が必要なのか
+Homebrewには2種類の「店」があります。
+例え：ホームセンターの2つの売り場
+建材売り場（Formula）：木材、ネジ、工具などの「部品」を売っている。自分で組み立てる必要があるが、軽くて細かく調整できる。
+家電売り場（Cask）：テレビ、冷蔵庫などの「完成品」を売っている。箱から出して使うだけ。重いがすぐ使える。
+Formula（建材売り場）
+ターミナル上で動くコマンドラインツールを管理します。
+	•	ソースコードからコンパイル、またはコンパイル済みバイナリを配置
+	•	軽量で、システムの奥深くに配置される
+	•	例：git、node、python、gcc
+Cask（家電売り場）
+マウスで操作するGUIアプリケーション（.app）を管理します。
+	•	.dmg や .pkg ファイルをダウンロードして展開
+	•	「アプリケーション」フォルダに配置される
+	•	例：VS Code、Chrome、Slack、Figma
+
+Formula
+Cask
+対象
+コマンドラインツール
+GUIアプリケーション
+オプション
+brew install git
+brew install --cask vscode
+インストール先
+/opt/homebrew/bin/ など
+/Applications/ フォルダ
+使い方
+ターミナルからコマンドで実行
+LaunchpadやDockから起動
+アンインストール
+brew uninstall git
+brew uninstall --cask vscode
+3. --cask を付けずに実行するとどうなるか
+# これはエラーになる
+brew install visual-studio-code
+
+# Error: No available formula with the name "visual-studio-code"
+# → "visual-studio-code" という名前のFormulaは見つかりません
+Homebrewは「Formulaの倉庫」を先に探します。VS CodeはFormulaには登録されていないので、「見つからない」と言われます。
+Homebrewが親切にヒントを出してくれることがあります。
+# Did you mean visual-studio-code?
+# → もしかして visual-studio-code ですか？
+# Run brew install --cask visual-studio-code instead
+# → brew install --cask visual-studio-code を代わりに実行してください
+4. 実行すると何が起きるか
+	1	倉庫（Caskのカタログ）を確認 HomebrewがGitHub上のCaskリポジトリにアクセスし、"visual-studio-code"の情報を取得する
+	2	ダウンロードURLを特定 Microsoftの公式サイトから、macOS用の.dmgファイルのダウンロードURLを取得する
+	3	ファイルをダウンロード VS Codeの.dmgファルを一時フォルダにダウンロードする
+	4	マウントと展開 .dmgファイルを「マウント」（仮想的にディスクとして認識）し、中のVisual Studio Code.appを取り出す
+	5	アプリケーションフォルダに配置 /Applications/Visual Studio Code.app として配置する
+	6	コマンドライン連携（オプション） ターミナルから code コマンドでVS Codeを開けるように、/opt/homebrew/bin/code へのシンボリックリンクも作成する
+5. インストール後の確認
+# VS Codeがアプリケーションフォルダにあるか確認
+ls /Applications/ | grep -i visual
+
+# codeコマンドが使えるか確認
+which code
+
+# VS Codeのバージョン確認
+code --version
+
+# Homebrew経由で入れたCask一覧を確認
+brew list --cask
+6. まとめ
+覚えておくべきポイント
+	•	brew install = コマンドラインツール（Formula）をインストール
+	•	brew install --cask = GUIアプリ（Cask）をインストール
+	•	Formulaは /opt/homebrew/ 以下に配置される
+	•	Caskは /Applications/ フォルダに配置される
+	•	--cask を付け忘れると「Formulaが見つからない」エラーになる
+Homebrewの2つの顔：Formula（コマンドツール）と Cask（GUIアプリ）
+--cask は「家電売り場で買ってください」という指定
