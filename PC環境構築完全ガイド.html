@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PC環境構築完全ガイド — 証明書・SSH・プロキシ・パッケージマネージャー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --ink: #1a1d23;
+  --muted: #5a6270;
+  --accent: #2563eb;
+  --accent-weak: color-mix(in oklab, var(--accent) 10%, var(--surface));
+  --accent-strong: #1d4ed8;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --line: color-mix(in oklab, var(--ink) 10%, transparent);
+  --step-0: clamp(0.95rem, 0.92rem + 0.2vw, 1.05rem);
+  --step-1: clamp(1.1rem, 1.05rem + 0.3vw, 1.3rem);
+  --step-2: clamp(1.4rem, 1.25rem + 0.8vw, 2rem);
+  --step-3: clamp(1.8rem, 1.5rem + 1.5vw, 2.8rem);
+  --step-4: clamp(2.2rem, 1.8rem + 2vw, 3.5rem);
+  --space: clamp(1rem, 0.8rem + 1vw, 1.5rem);
+  --radius: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 8px 24px -10px rgba(0,0,0,0.14);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.85;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+header {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #fff;
+  padding: calc(var(--space) * 3) calc(var(--space) * 1.5);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.6;
+}
+
+header h1 {
+  font-size: var(--step-4);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  position: relative;
+  margin-bottom: calc(var(--space) * 0.6);
+}
+
+header p {
+  color: #94a3b8;
+  font-size: var(--step-1);
+  max-width: 640px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: calc(var(--space) * 2) var(--space);
+}
+
+section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: calc(var(--space) * 1.5);
+  margin-bottom: calc(var(--space) * 1.2);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+}
+
+h2 {
+  font-size: var(--step-2);
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: calc(var(--space) * 0.8);
+  padding-bottom: calc(var(--space) * 0.4);
+  border-bottom: 2px solid var(--accent-weak);
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+h2 .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6em;
+  height: 1.6em;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.65em;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+h3 {
+  font-size: var(--step-1);
+  font-weight: 700;
+  color: var(--accent-strong);
+  margin-top: calc(var(--space) * 1.1);
+  margin-bottom: calc(var(--space) * 0.4);
+}
+
+h3:first-of-type { margin-top: 0; }
+
+p {
+  margin-bottom: calc(var(--space) * 0.6);
+  color: var(--muted);
+}
+
+p strong { color: var(--ink); }
+
+.analogy {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-left: 4px solid var(--success);
+  border-radius: var(--radius);
+  padding: calc(var(--space) * 0.9);
+  margin: calc(var(--space) * 0.8) 0;
+}
+
+.analogy-title {
+  font-weight: 700;
+  color: var(--success);
+  font-size: 0.95em;
+  margin-bottom: 0.3em;
+}
+
+.analogy p { color: #064e3b; margin: 0; }
+
+.warning-box {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-left: 4px solid var(--warning);
+  border-radius: var(--radius);
+  padding: calc(var(--space) * 0.9);
+  margin: calc(var(--space) * 0.8) 0;
+}
+
+.warning-box-title {
+  font-weight: 700;
+  color: var(--warning);
+  font-size: 0.95em;
+  margin-bottom: 0.3em;
+}
+
+.warning-box p { color: #78350f; margin: 0; }
+
+.danger-box {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius);
+  padding: calc(var(--space) * 0.9);
+  margin: calc(var(--space) * 0.8) 0;
+}
+
+.danger-box-title {
+  font-weight: 700;
+  color: var(--danger);
+  font-size: 0.95em;
+  margin-bottom: 0.3em;
+}
+
+.danger-box p { color: #7f1d1d; margin: 0; }
+
+.info-box {
+  background: var(--accent-weak);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  padding: calc(var(--space) * 0.9);
+  margin: calc(var(--space) * 0.8) 0;
+}
+
+.info-box-title {
+  font-weight: 700;
+  color: var(--accent-strong);
+  font-size: 0.95em;
+  margin-bottom: 0.3em;
+}
+
+.info-box p { color: #1e3a5f; margin: 0; }
+
+pre, code {
+  font-family: "JetBrains Mono", "Consolas", "Monaco", monospace;
+  font-size: 0.88em;
+}
+
+code {
+  background: #f1f5f9;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: #334155;
+}
+
+pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: calc(var(--space) * 0.9);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  margin: calc(var(--space) * 0.6) 0;
+  line-height: 1.6;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: 0.9em;
+}
+
+.code-comment { color: #64748b; }
+.code-command { color: #60a5fa; }
+.code-output { color: #94a3b8; }
+.code-highlight { color: #fbbf24; }
+
+ul, ol {
+  margin-left: 1.4em;
+  margin-bottom: calc(var(--space) * 0.6);
+  color: var(--muted);
+}
+
+li { margin-bottom: 0.35em; }
+
+li::marker { color: var(--accent); }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: calc(var(--space) * 0.8) 0;
+  font-size: 0.92em;
+}
+
+th, td {
+  padding: 0.7em 0.8em;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  background: #f8fafc;
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 0.9em;
+}
+
+tr:hover { background: #f8fafc; }
+
+.os-tabs {
+  display: flex;
+  gap: 0.5em;
+  margin-bottom: calc(var(--space) * 0.6);
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 0.3em;
+}
+
+.os-tab {
+  padding: 0.4em 1em;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.os-tab.mac { background: #e0e7ff; color: #3730a3; }
+.os-tab.win { background: #dbeafe; color: #1e40af; }
+
+.step-list {
+  list-style: none;
+  margin-left: 0;
+  counter-reset: step;
+}
+
+.step-list > li {
+  position: relative;
+  padding-left: 2.2em;
+  margin-bottom: 0.8em;
+}
+
+.step-list > li::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.15em;
+  width: 1.6em;
+  height: 1.6em;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75em;
+  font-weight: 700;
+}
+
+.toc {
+  background: #f8fafc;
+  border-radius: var(--radius);
+  padding: calc(var(--space) * 1.2);
+  margin-bottom: calc(var(--space) * 1.2);
+  border: 1px solid var(--line);
+}
+
+.toc h3 {
+  margin-top: 0;
+  color: var(--ink);
+  font-size: 1.1em;
+}
+
+.toc ul {
+  list-style: none;
+  margin-left: 0;
+  columns: 2;
+  column-gap: 2em;
+}
+
+.toc li { margin-bottom: 0.3em; }
+
+.toc a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.92em;
+}
+
+.toc a:hover { text-decoration: underline; }
+
+@media print {
+  body { background: #fff; }
+  header { background: #1e293b !important; -webkit-print-color-adjust: exact; }
+  section { box-shadow: none; border: 1px solid #ddd; }
+  .analogy, .warning-box, .info-box, .danger-box { -webkit-print-color-adjust: exact; }
+}
+
+@page { size: A4; margin: 15mm; }
+
+@media (max-width: 600px) {
+  .toc ul { columns: 1; }
+  header { padding: calc(var(--space) * 2) var(--space); }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PC環境構築 完全ガイド</h1>
+  <p>証明書・SSL・SSH・プロキシ・パッケージマネージャーを、素人にもわかるように網羅的に解説</p>
+</header>
+
+<div class="container">
+
+<div class="toc">
+  <h3>目次</h3>
+  <ul>
+    <li><a href="#s1">1. 全体像を把握する</a></li>
+    <li><a href="#s2">2. パッケージマネージャー</a></li>
+    <li><a href="#s3">3. SSL/TLSと証明書</a></li>
+    <li><a href="#s4">4. SSH（Secure Shell）</a></li>
+    <li><a href="#s5">5. プロキシ設定</a></li>
+    <li><a href="#s6">6. Gitの初期設定</a></li>
+    <li><a href="#s7">7. エディタ・IDEの設定</a></li>
+    <li><a href="#s8">8. 環境変数の管理</a></li>
+    <li><a href="#s9">9. よくあるエラーと対処法</a></li>
+    <li><a href="#s10">10. チェックリスト</a></li>
+  </ul>
+</div>
+
+<section id="s1">
+  <h2><span class="num">1</span>全体像を把握する</h2>
+  <p>PC環境構築で躓く原因の多くは、「各技術が何のために存在するのか」が見えていないことです。まず全体像を掴みましょう。</p>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー：会社の入館システムで考える</div>
+    <p>あなたのPCが「会社のビル」だと想像してください。</p>
+    <p><strong>SSL/TLS証明書</strong> = 入館証の真贋確認。偽の入館証を持った人を排除します。<br>
+    <strong>SSH</strong> = 社員専用の裏口。一般客とは別の安全な通路で出入りします。<br>
+    <strong>プロキシ</strong> = 受付担当。すべての出りを一元管理し、規則に従って中継します。<br>
+    <strong>パッケージマネージャー</strong> = 備品調達係。必要なものを自動で取り寄せてくれます。</p>
+  </div>
+
+  <table>
+    <tr><th>技術</th><th>役割</th><th>躓きやすいポイント</th></tr>
+    <tr><td>SSL/TLS証明書</td><td>通信相手の正体を確認し、通信を暗号化する</td><td>自己署名証明書、社内CA、期限切れ</td></tr>
+    <tr><td>SSH</td><td>サーバーに安全にログインする</td><td>鍵の場所、known_hosts、パーミッション</td></tr>
+    <tr><td>プロキシ</td><td>インターネットアクセスを中継する</td><td>認証、NO_PROXY設定、HTTPS対応</td></tr>
+    <tr><td>パッケージマネージャー</td><td>ソフトウェアを自動インストールする</td><td>PATH設定、依存関係、権限</td></tr>
+  </table>
+</section>
+
+<section id="s2">
+  <h2><span class="num">2</span>パッケージマネージャー</h2>
+  <p>パッケージマネージャーは、ソフトウェアを「探して・ダウンロードして・インストールして・更新する」作業を自動化するツールです。CLIで操作することで、再現性のある環境構築が可能になります。</p>
+
+  <h3>Mac: Homebrew</h3>
+  <p>Mac事実上の標準パッケージマネージャーです。インストール済みと推定されますが、確認方法は以下です。</p>
+
+  <div class="os-tabs">
+    <span class="os-tab mac">macOS</span>
+  </div>
+
+  <pre><code><span class="code-comment"># Homebrewがインストールされてるか確認</span>
+<span class="code-command">brew --version</span>
+
+<span class="code-comment"># インストールされていない場合のみ実行</span>
+<span class="code-command">/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</span>
+
+<span class="code-comment"># インストール後、PATHを通す（M1/M2/M3 Macの場合）</span>
+<span class="code-command">echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' &gt;&gt; ~/.zprofile</span>
+<span class="code-command">eval "$(/opt/homebrew/bin/brew shellenv)"</span></code></pre>
+
+  <div class="info-box">
+    <div class="info-box-title">Intel Mac vs Apple Silicon Mac</div>
+    <p>Intel Macでは <code>/usr/local</code>、Apple Silicon Mac（M1/M2/M3/M5）は <code>/opt/homebrew</code> にインストールされます。PATHが違うため、混同しないよう注意してください。</p>
+  </div>
+
+  <h3>Windows: 3つの選択肢</h3>
+  <p>Windowsには複数のパッケージマネージャーがあります。用途に応じて使い分けます。</p>
+
+  <div class="os-tabs">
+    <span class="os-tab win">Windows</span>
+  </div>
+
+  <table>
+    <tr><th>ツール</th><th>特徴</th><th>おすすめ用途</th></tr>
+    <tr><td>winget</td><td>Microsoft純正。Windows 11では標準搭載。</td><td>一般的なソフト（Chrome、VS Codeなど）</td></tr>
+    <tr><td>scoop</td><td>ユーザーディレクトリにインストール。管理者権限不要。</td><td>開発ツール（Git、Node、Pythonなど）</td></tr>
+    <tr><td>chocolatey</td><td>最も豊富なパッケージ数。企業利用も多い。</td><td>業務アプリの一括導入</td></tr>
+  </table>
+
+  <h3>winget（Windows公式）</h3>
+  <pre><code><span class="code-comment"># インストール済みか確認（Windows 10 20H2以降 / Windows 11）</span>
+<span class="code-command">winget --version</span>
+
+<span class="code-comment"># ソフトを検索</span>
+<span class="code-command">winget search git</span>
+
+<span class="code-comment"># インストール</span>
+<span class="code-command">winget install --id Git.Git -e --source winget</span>
+
+<span class="code-comment"># アップデート</span>
+<span class="code-command">winget upgrade --all</span></code></pre>
+
+  <h3>Scoop（開発者向け）</h3>
+  <pre><code><span class="code-comment"># インストール（PowerShellで実行）</span>
+<span class="code-command">Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</span>
+<span class="code-command">Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression</span>
+
+<span class="code-comment"># よく使うbucket（パッケージ集）を追加</span>
+<span class="code-command">scoop bucket add extras</span>
+
+<span class="code-comment"># インストール例</span>
+<span class="code-command">scoop install git nodejs python vscode</span></code></pre>
+
+  <div class="warning-box">
+    <div class="warning-box-title">PowerShell実行ポリシーについて</div>
+    <p><code>Set-ExecutionPolicy</code> は「PowerShellスクリプトの実行を許可する」設定です。セキュリティ上の設定なの、社内PCでは変更が制限されている場合があります。その場合はIT部門に確認してください。</p>
+  </div>
+
+  <h3>Homebrew vs Scoop 対応表</h3>
+  <table>
+    <tr><th>操作</th><th>Mac (Homebrew)</th><th>Windows (Scoop)</th></tr>
+    <tr><td>検索</td><td><code>brew search git</code></td><td><code>scoop search git</code></td></tr>
+    <tr><td>インストール</td><td><code>brew install git</code></td><td><code>scoop install git</code></td></tr>
+    <tr><td>アップデート</td><td><code>brew upgrade git</code></td><td><code>scoop update git</code></td></tr>
+    <tr><td>全体アップデート</td><td><code>brew upgrade</code></td><td><code>scoop update *</code></td></tr>
+    <tr><td>アンインストール</td><td><code>brew uninstall git</code></td><td><code>scoop uninstall git</code></td></tr>
+  </table>
+</section>
+
+<section id="s3">
+  <h2><span class="num">3</span>SSL/TLSと証明書</h2>
+  <p>SSL/TLS（Secure Sockets Layer / Transport Layer Security）は、インターネット通信を暗号化する技術です。「https://」のサイトはすべてこれを使っています。</p>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー：封筒と証明書</div>
+    <p>HTTP通信は「はがき」、HTTPS通信は「封筒に入った手紙」です。封筒を開けられるのは宛先の相手だけです。<br><br>
+    証明書は「封筒に貼られたホログラムシール」のようなものです。本物のシールが貼ってあれば、その手紙は本当にその会社から来たと信じられます。</p>
+  </div>
+
+  <h3>証明書の種類</h3>
+  <table>
+    <tr><th>種類</th><th>説明</th><th>躓きやすさ</th></tr>
+    <tr><td>公開CA証明書</td><td>DigiCert、Let's Encryptなどが発行。ブラウザが自動で信頼。</td><td>低（基本自動）</td></tr>
+    <tr><td>社内CA証明書</td><td>企業が独自に運用する証明書。社内システムで使用。</td><td>高（手動インストールが必要）</td></tr>
+    <tr><td>自己署名証明書</td><td>個人やテスト用途で自分で発行。誰も信頼しない。</td><td>高（明示的に信頼設定が必要）</td></tr>
+  </table>
+
+  <h3>社内CA証明書のインストール（企業環境で必須）</h3>
+  <p>多くの企業では、社内のプロキシサーバーがSSL通信を「中継・検査」します（SSLインスペクション）。この際、社内CAが発行した証明書をPCが信頼していないと、ブラウザやCLIツールがエラーを出します。</p>
+
+  <div class="os-tabs">
+    <span class="os-tab mac">macOS</span>
+  </div>
+  <pre><code><span class="code-comment"># 社内CA証明書をダウンロード（IT部門から入手）して、システムキーチェーンに追加</span>
+<span class="code-command">sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ~/Downloads/company-ca.crt</span>
+
+<span class="code-comment"># HomebrewでインストールしたGit/curlに証明書を認識させる</span>
+<span class="code-command">git config --global http.sslCAInfo /path/to/company-ca.crt</span></code></pre>
+
+  <div class="os-tabs">
+    <span class="os-tab win">Windows</span>
+  </div>
+  <pre><code><span class="code-comment"># PowerShell（管理者権限）で実行</span>
+<span class="code-command">Import-Certificate -FilePath "C:\Users\YourName\Downloads\company-ca.crt" -CertStoreLocation Cert:\LocalMachine\Root</span>
+
+<span class="code-comment"># Git for Windowsに証明書を認識させる</span>
+<span class="code-command">git config --global http.sslCAInfo "C:\Users\YourName\Downloads\company-ca.crt"</span></code></pre>
+
+  <div class="danger-box">
+    <div class="danger-box-title">「一時的にSSL検証を無効にする」設定は避ける</div>
+    <p><code>git config --global http.sslVerify false</code> や <code>curl -k</code> は、セキュリティを完全に無効化します。一時的な回避策として使われることがありますが、本質的な解決にはなりません。社内CA証明書を正しくインストールする方が正攻法です。</p>
+  </div>
+
+  <h3>GitのSSLエラー対処フロー</h3>
+  <ol class="step-list">
+    <li>エラーメッセージを確認：<code>unable to get local issuer certificate</code> なら証明書問題</li>
+    <li>社内CA証明書をIT部門から入手する</li>
+    <li>OSの証明書ストアにインストールする</li>
+    <li>Gitに証明書パスを教える（<code>http.sslCAInfo</code>）</li>
+    <li>プロキシ設定も併用している場合は、そちらも確認する</li>
+  </ol>
+</section>
+
+<section id="s4">
+  <h2><span class="num">4</span>SSH（Secure Shell）</h2>
+  <p>SSHは、リモートサーバーに安全に接続するためのプロトコルです。GitHubやGitLabへの接続、社内サーバーへのログインなどで使います。</p>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー：鍵付きポスト</div>
+    <p>SSHは「鍵付きの私人書ポスト」です。公開鍵は「ポストの投入口」（誰でも見られる）、秘密鍵は「ポストの鍵」（絶対に他人に見せない）です。サーバーに公開ない）です。サーバーに公開鍵を預けておき、接続時に秘密鍵で「自分だ」と証明します。</p>
+  </div>
+
+  <h3>SSH鍵ペアの生成</h3>
+  <p>現代の標準は Ed25519 アルゴリズムです。古いシステムで対応していない場合のみ RSA を使います。</p>
+
+  <div class="os-tabs">
+    <span class="os-tab mac">macOS / Windows共通</span>
+  </div>
+  <pre><code><span class="code-comment"># Ed25519で鍵ペアを生成（推奨）</span>
+<span class="code-command">ssh-keygen -t ed25519 -C "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9ae3f5efe8c5fff7fbf3f6daffe2fbf7eaf6ffb4f9f5f7">[email&#160;protected]</a>"</span>
+
+<span class="code-comment"># 保存場所の確認（デフォルトでEnter）</span>
+<span class="code-comment"># パスフレーズは設定推奨（空でも可）</span>
+
+<span class="code-comment"># 公開鍵の内容を表示（この内容をGitHub/GitLabに登録）</span>
+<span class="code-command">cat ~/.ssh/id_ed25519.pub</span>
+<span class="code-output">ssh-ed25519 AAAAC3NzaC... <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8af3e5fff8d5efe7ebe3e6caeff2ebe7fae6efa4e9e5e7">[email&#160;protected]</a></span></code></pre>
+
+  <h3>GitHubへの公開鍵登録</h3>
+  <ol class="step-list">
+    <li>GitHubにログイン → 右上アイコン → Settings</li>
+    <li>左メニュー「SSH and GPG keys」→「New SSH key」</li>
+    <li>Titleにわかりやすい名前（例："MacBook-Pro"）を入力</li>
+    <li>Key欄に <code>~/.ssh/id_ed25519.pub</code> の内容を貼り付け</li>
+    <li>「Add SSH key」をクリック</li>
+  </ol>
+
+  <h3>SSH接続テスト</h3>
+  <pre><code><span class="code-comment"># GitHubへの接続テスト</span>
+<span class="code-command">ssh -T <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="33545a4773545a475b46511d505c5e">[email&#160;protected]</a></span>
+<span class="code-output">Hi username! You've successfully authenticated...</span>
+
+<span class="code-comment"># 失敗した場合は詳細ログを確認</span>
+<span class="code-command">ssh -vT <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1c7b75685c7b756874697e327f7371">[email&#160;protected]</a></span></code></pre>
+
+  <h3>SSH configファイル（複数の鍵を管理）</h3>
+  <p>会社用と個人用で別々の鍵を使いたい場合、<code>~/.ssh/config</code> で管理します。</p>
+
+  <pre><code><span class="code-comment"># ~/.ssh/config</span>
+Host github-personal
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_personal
+
+Host github-work
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_work
+
+Host gitlab-work
+    HostName gitlab.company.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_work
+    <span class="code-comment"># 社内プロキシ経由の場合</span>
+    ProxyCommand nc -X connect -x proxy.company.com:8080 %h %p</code></pre>
+
+  <h3>known_hostsとは</h3>
+  <p>初めて接続するサーバーにSSHでアクセスすると、「本当にこのホストを信頼しますか？」と聞かれます。Yesと答えると、サーバーの「指紋」が <code>~/.ssh/known_hosts</code> に保存されます。次回からは自動で信頼されます。</p>
+
+  <div class="warning-box">
+    <div class="warning-box-title">known_hostsエラー</div>
+    <p>サーバーが再インストールされたり、IPが変わったりすると、保存された指紋と一致しなくなり、<code>WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!</code> というエラーが出ます。<code>ssh-keygen -R ホスト名</code> で古いエントリを削除すれば解決します。</p>
+  </div>
+</section>
+
+<section id="s5">
+  <h2><span class="num">5</span>プロキシ設定</h2>
+  <p>企業環境では、インターネットへのアクセスが「プロキシサーバー」を経由するのが一般的です。プロキシを正しく設定しないと、ほとんどのCLIツールが外部と通信できません。</p>
+
+  <div class="analogy">
+    <div class="analogy-title">アナロジー：会社の受付</div>
+    <p>プロキシは「会社の受付担当」です。社員（あなたのPC）が外に電話をかけるとき必ず内線プロキシ）を通します。受付が「誰ですか？」と確認するので、認証情報が必要な場合もあります。</p>
+  </div>
+
+  <h3>環境変数での設定</h3>
+  <p>多くのCLIツールは、以下の環境変数を自動的に読み取ります。</p>
+
+  <table>
+    <tr><th>変数名</th><th>用途</th><th>例</th></tr>
+    <tr><td><code>HTTP_PROXY</code></td><td>HTTP通信のプロキシ</td><td><code>http://proxy.company.com:8080</code></td></tr>
+    <tr><td><code>HTTPS_PROXY</code></td><td>HTTPS通信のプロキシ</td><td><code>http://proxy.company.com:8080</code></td></tr>
+    <tr><td><code>NO_PROXY</code></td><td>プロキシを経由しないホスト</td><td><code>localhost,127.0.0.1,.company.com</code></td></tr>
+  </table>
+
+  <div class="os-tabs">
+    <span class="os-tab mac">macOS</span>
+  </div>
+  <pre><code><span class="code-comment"># ~/.zshrc に追加（Zshの場合）</span>
+<span class="code-command">export HTTP_PROXY="http://proxy.company.com:8080"</span>
+<span class="code-command">export HTTPS_PROXY="http://proxy.company.com:8080"</span>
+<span class="code-command">export NO_PROXY="localhost,127.0.0.1,.company.com,10.0.0.0/8"</span>
+
+<span class="code-comment"># 反映</span>
+<span class="code-command">source ~/.zshrc</span></code></pre>
+
+  <div class="os-tabs">
+    <span class="os-tab win">Windows</span>
+  </div>
+  <pre><code><span class="code-comment"># PowerShellで一時的に設定（現在のセッションのみ）</span>
+<span class="code-command">$env:HTTP_PROXY = "http://proxy.company.com:8080"</span>
+<span class="code-command">$env:HTTPS_PROXY = "http://proxy.company.com:8080"</span>
+
+<span class="code-comment"># 永続的に設定（システム環境変数）</span>
+<span class="code-command">[System.Environment]::SetEnvironmentVariable("HTTP_PROXY", "http://proxy.company.com:8080", "User")</span>
+<span class="code-command">[System.Environment]::SetEnvironmentVariable("HTTPS_PROXY", "http://proxy.company.com:8080", "User")</span></code></pre>
+
+  <h3>認証付きプロキシの場合</h3>
+  <p>ユーザー名とパスワードが必要なプロキシの場合、URLに埋め込みます。</p>
+  <pre><code><span class="code-command">export HTTP_PROXY="http://username:<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9aeafbe9e9edf5e8fedaeae8f5e2e3b4f9f5f7eafbf4e3b4f9f5f7">[email&#160;protected]</a>:8080"</span></code></pre>
+
+  <div class="warning-box">
+    <div class="warning-box-title">パスワードに特殊文字がある場合</div>
+    <p><code>@</code> や <code>:</code> などの特殊文字がパスワードに含まれる場合、URLエンコードする必要があります。例えば <code>@</code> は <code>%40</code> に置き換えます。セキュリティ上、パスードを平文で書きたくない場合は、<code>.netrc</code> ファイルや各ツールの認証キャッシュ機能を検討してください。</p>
+  </div>
+
+  <h3>Gitのプロキシ設定</h3>
+  <pre><code><span class="code-comment"># Git専用のプロキシ設定</span>
+<span class="code-command">git config --global http.proxy http://proxy.company.com:8080</span>
+<span class="code-command">git config --global https.proxy http://proxy.company.com:8080</span>
+
+<span class="code-comment"># 特定のホストだけプロキシを使わない</span>
+<span class="code-command">git config --global http.https://github.com.proxy ""</span>
+
+<span class="code-comment"># 設定確認</span>
+<span class="code-command">git config --global --get http.proxy</span></code></pre>
+
+  <h3>NO_PROXYの書き方ルール</h3>
+  <ul>
+    <li><code>localhost</code>, <code>127.0.0.1</code> : ローカル通信はプロキシ不要</li>
+    <li><code>.company.com</code> : <code>anything.company.com</code> にマッチ</li>
+    <li><code>10.0.0.0/8</code> : プライベートIP帯域全体を除外（CIDR表記）</li>
+    <li><code>github.com</code> : 特定のドメインを直接接続</li>
+  </ul>
+</section>
+
+<section id="s6">
+  <h2><span class="num">6</span>Gitの初期設定</h2>
+  <p>Gitは環境構築の中心ツールです。正しく設定しないと、コミット者名が正しく記録されなかったり、push/pullでエラーが出たりします。</p>
+
+  <h3>最低限必要な設定</h3>
+  <pre><code><span class="code-comment"># ユーザー名とメールアドレス（必須）</span>
+<span class="code-command">git config --global user.name "Your Name"</span>
+<span class="code-command">git config --global user.email "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e79e889295c9828a868e8ba7829f868a978b82c984888a">[email&#160;protected]</a>"</span>
+
+<span class="code-comment"># デフォルトブランチ名をmainに</span>
+<span class="code-command">git config --global init.defaultBranch main</span>
+
+<span class="code-comment"># エディタをVS Codeに設定</span>
+<span class="code-command">git config --global core.editor "code --wait"</span>
+
+<span class="code-comment"># 設定確認</span>
+<span class="code-command">git config --global --list</span></code></pre>
+
+  <h3>社内環境での追加設定</h3>
+  <pre><code><span class="code-comment"># SSL証明書のパスを指定（社内CAがある場合）</span>
+<span class="code-command">git config --global http.sslCAInfo /path/to/company-ca.crt</span>
+
+<span class="code-comment"># プロキシ設定</span>
+<span class="code-command">git config --global http.proxy http://proxy.company.com:8080</span>
+
+<span class="code-comment"># 大文字小文字の扱いを厳密に（Mac/Windows間の互換性）</span>
+<span class="code-command">git config --global core.ignorecase true</span>
+
+<span class="code-comment"># 改行コードを自変換（Windowsで作業する場合）</span>
+<span class="code-command">git config --global core.autocrlf true</span>
+<span class="code-comment"># Mac/Linuxの場合は false または input</span>
+<span class="code-command">git config --global core.autocrlf input</span></code></pre>
+
+  <div class="info-box">
+    <div class="info-box-title">Gitの設定ファイルの場所</div>
+    <p>グローバル設定は <code>~/.gitconfig</code>（Mac/Windows共通）に保存されます。直接編集しても構いません。</p>
+  </div>
+</section>
+
+<section id="s7">
+  <h2><span class="num">7</span>エディタ・IDEの設定</h2>
+  <p>Visual Studio Code（VS Code）は現代の標準エディタです。社内環境では追加の設定が必要な場合があります。</p>
+
+  <h3>VS Codeのプロキシ設定</h3>
+  <p>VS CodeはOSのプロキシ設定を自動で読み取りますが、明示的に設定することもできます。</p>
+
+  <pre><code><span class="code-comment"># VS Code内で Ctrl+Shift+P（Cmd+Shift+P）→ "Preferences: Open User Settings (JSON)"</span>
+{
+  "http.proxy": "http://proxy.company.com:8080",
+  "http.proxyStrictSSL": true,
+  "http.proxySupport": "override"
+}</code></pre>
+
+  <h3>拡張機能のインストール</h3>
+  <p>社内プロキシ環境では、拡張機能マーケットプレイスへのアクセスが制限されることがあります。その場合：</p>
+  <ol class="step-list">
+    <li>拡張機能を <code>.vsix</code> ファイルとしてダウンロード（別のネットワークで）</li>
+    <li>VS Codeで「Extensions」→「...」→「Install from VSIX」</li>
+  </ol>
+
+  <h3>開発者必須の拡張機能</h3>
+  <table>
+    <tr><th>拡張機能</th><th>用途</th></tr>
+    <tr><td>GitLens</td><td>Git履歴の可視化</td></tr>
+    <tr><td>ESLint / Prettier</td><td>JavaScript/TypeScript開発</td></tr>
+    <tr><td>Python</td><td>Python開発（Microsoft公式）</td></tr>
+    <tr><td>Remote - SSH</td><td>リモートサーバー上で開発</td></tr>
+    <tr><td>Dev Containers</td><td>Dockerコンテナ内で開発</td></tr>
+  </table>
+</section>
+
+<section id="s8">
+  <h2><span class="num">8</span>環境変数の管理</h2>
+  <p>環境変数は、OSがプログラムに渡す「設定値」です。プロキシ設定、PATH、APIキーなどがここに入ります。</p>
+
+  <h3>重要な環境変数一覧</h3>
+  <table>
+    <tr><th>変数名</th><th>役割</th><th>設定例</th></tr>
+    <tr><td><code>PATH</code></td><td>コマンドを探すディレクトリ一覧</td><td><code>/usr/local/bin:/usr/bin</code></td></tr>
+    <tr><td><code>HOME</code> / <code>USERPROFILE</code></td><td>ユーザーのホームディレクトリ</td><td><code>/Users/username</code></td></tr>
+    <tr><td><code>HTTP_PROXY</code></td><td>HTTPプロキシ</td><td><code>http://proxy:8080</code></td></tr>
+    <tr><td><code>HTTPS_PROXY</code></td><td>HTTPSプロキシ</td><td><code>http://proxy:8080</code></td></tr>
+    <tr><td><code>NO_PROXY</code></td><td>プロキシ除外リスト</td><td><code>localhost,127.0.0.1</code></td></tr>
+    <tr><td><code>NODE_EXTRA_CA_CERTS</code></td><td>Node.js追加CA証明書</td><td><code>/path/to/ca.crt</code></td></tr>
+    <tr><td><code>SSL_CERT_FILE</code></td><td>Ruby/Python等のCA証明書</td><td><code>/path/to/ca.crt</code></td></tr>
+    <tr><td><code>REQUESTS_CA_BUNDLE</code></td><td>Python requestsライブラリのCA証明書</td><td><code>/path/to/ca.crt</code></td></tr>
+  </table>
+
+  <h3>MacでのPATH設定</h3>
+  <pre><code><span class="code-comment"># ~/.zshrc に追加（Apple Silicon Mac + Homebrewの場合）</span>
+<span class="code-command">export PATH="/opt/homebrew/bin:$PATH"</span>
+<span class="code-command">export PATH="/opt/homebrew/sbin:$PATH"</span>
+
+<span class="code-comment"># 自分でインストールしたツールのパスも追加</span>
+<span class="code-command">export PATH="$HOME/.local/bin:$PATH"</span></code></pre>
+
+  <h3>WindowsでのPATH設定</h3>
+  <pre><code><span class="code-comment"># PowerShellで追加（ユーザー環境変数）</span>
+<span class="code-command">$userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")</span>
+<span class="code-command">[System.Environment]::SetEnvironmentVariable("Path", $userPath + ";C:\Tools\myapp", "User")</span>
+
+<span class="code-comment"># 設定後、PowerShellを再起動しないと反映されない</span></code></pre>
+
+  <div class="warning-box">
+    <div class="warning-box-title">PATHの順序が重要</div>
+    <p>PATHは「先に見つかったものが優先」されます。HomebrewでインストールしたGitが使われるようにするには、<code>/opt/homebrew/bin</code> が <code>/usr/bin</code> より前に来る必要があります。</p>
+  </div>
+</section>
+
+<section id="s9">
+  <h2><span class="num">9</span>よくあるエラーと対処法</h2>
+
+  <h3>Git関連</h3>
+  <table>
+    <tr><th>エラーメッセージ</th><th>原因</th><th>対処法</th></tr>
+    <tr>
+      <td><code>unable to get local issuer certificate</code></td>
+      <td>社内CA証明書が信頼されていない</td>
+      <td>社内CA証明書をインストールし、<code>http.sslCAInfo</code> を設定</td>
+    </tr>
+    <tr>
+      <td><code>Failed to connect to github.com port 443</code></td>
+      <td>プロキシ設定がない/間違い</td>
+      <td><code>HTTP_PROXY</code> / <code>HTTPS_PROXY</code> を設定</td>
+    </tr>
+    <tr>
+      <td><code>Permission denied (publickey)</code></td>
+      <td>SSH鍵がGitHubに登録されていない</td>
+      <td>公開鍵をGitHubに登録、<code>ssh-add</code> で鍵を読み込む</td>
+    </tr>
+    <tr>
+      <td><code>Could not resolve host</code></td>
+      <td>DNSまたはネットワーク接続問題</td>
+      <td>プロキシ設定、VPN接続を確認</td>
+    </tr>
+  </table>
+
+  <h3>Homebrew関連</h3>
+  <table>
+    <tr><th>エラーメッセージ</th><th>原因</th><th>対処法</th></tr>
+    <tr>
+      <td><code>Command not found: brew</code></td>
+      <td>PATHにHomebrewが含まれていない</td>
+      <td><code>~/.zshrc</code> に <code>/opt/homebrew/bin</code> を追加</td>
+    </tr>
+    <tr>
+      <td><code>SSL certificate problem</code></td>
+      <td>brewのcurlが社内CAを認識していない</td>
+      <td><code>export SSL_CERT_FILE=/path/to/ca.crt</code></td>
+    </tr>
+  </table>
+
+  <h3>SSH関連</h3>
+  <table>
+    <tr><th>エラーメッセージ</th><th>原因</th><th>対処法</th></tr>
+    <tr>
+      <td><code>WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED</code></td>
+      <td>サーバーの指紋が変わった</td>
+      <td><code>ssh-keygen -R ホスト名</code></td>
+    </tr>
+    <tr>
+      <td><code>Bad owner or permissions</code></td>
+      <td>SSH鍵のパーミッションが緩すぎる</td>
+      <td><code>chmod 600 ~/.ssh/id_ed25519</code></td>
+    </tr>
+    <tr>
+      <td><code>Could not open a connection to your authentication agent</code></td>
+      <td>ssh-agentが動いていない</td>
+      <td><code>eval "$(ssh-agent -s)"</code> → <code>ssh-add</code></td>
+    </tr>
+  </table>
+
+  <h3>パケージインストール関連</h3>
+  <table>
+    <tr><th>エラーメッセージ</th><th>原因</th><th>対処法</th></tr>
+    <tr>
+      <td><code>Permission denied</code> / <code>EACCES</code></td>
+      <td>インストール先への書き込み権限がない</td>
+      <td>Scoop（Windows）を使う、または管理者権限で実行</td>
+    </tr>
+    <tr>
+      <td><code>Unable to download</code></td>
+      <td>プロキシまたはSSL証明書問題</td>
+      <td>プロキシとCA証明書の両方を確認</td>
+    </tr>
+  </table>
+</section>
+
+<section id="s10">
+  <h2><span class="num">10</span>チェックリスト</h2>
+  <p>新しいPCの環境構築時は、以下の順序で進めるとスムーズです。</p>
+
+  <h3>ステップ1: 基本ツール</h3>
+  <ul>
+    <li>パッケージマネージャーをインストール（Mac: Homebrew / Windows: winget or scoop）</li>
+    <li>Gitをインストール</li>
+    <li>VS Codeをインストール</li>
+    <li>ターミナルを整える（Mac: iTerm2 or Warp / Windows: Windows Terminal）</li>
+  </ul>
+
+  <h3>ステップ2: ネトワーク設定</h3>
+  <ul>
+    <li>社内CA証明書を入手・インストール</li>
+    <li>プロキシ設定を確認（<code>HTTP_PROXY</code> / <code>HTTPS_PROXY</code> / <code>NO_PROXY</code>）</li>
+    <li>Gitのプロキシ・SSL設定を確認</li>
+    <li>GitHubへのアクセステスト（<code>ssh -T <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="88efe1fcc8efe1fce0fdeaa6ebe7e5">[email&#160;protected]</a></code>）</li>
+  </ul>
+
+  <h3>ステップ3: 開発環境</h3>
+  <ul>
+    <li>プログラミング言語のランタイムをインストール（Node.js / Python / Javaなど）</li>
+    <li>言語固有のパッケージマネージャーを設定（npm / pip / Mavenなど）</li>
+    <li>VS Code拡張機能をインストール</li>
+    <li>必要に応じてDockerをインストール</li>
+  </ul>
+
+  <h3>ステップ4: 動作確認</h3>
+  <ul>
+    <li><code>git clone</code> で社内リポジトリをcloneできる</li>
+    <li><code>npm install</code> や <code>pip install</code> がプロキシ環境下で成功する</li>
+    <li>SSHでリモートサーバーにログインできる</li>
+    <li>VS Codeの拡張機能マーケットプレイスにアクセスできる</li>
+  </ul>
+
+  <div class="info-box">
+    <div class="info-box-title">最後のポイント</div>
+    <p>環境構築で躓いたときは、「どのレイヤーで問題が起きているか」を切り分けることが重要です。ネットワーク層（プロキシ）なのか、認証層（証明書/SSH）なのか、ツール層（パッケージマネージャー）なのか。エラーメッセージをよく読んで、該当するセクションに戻って確認してください。</p>
+  </div>
+</section>
+
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>
